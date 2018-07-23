@@ -17,7 +17,7 @@ def size_block(size, mag):
 
 
 class TrainingData:
-    def __init__(self): 
+    def __init__(self,batch_size):
         list1 = glob.glob('img_train/1/*.png')
         list1 = list(map(lambda path: (path,1), list1))
 
@@ -31,14 +31,14 @@ class TrainingData:
         print(self.list12)
 
         self.iepoch = 0
-        self.batch_size = 10
+        self.batch_size = batch_size
         self.ibatch = 0
 
     def get_batch(self):
-        nbatch: int = int(len(self.list12)/self.batch_size)+1
+        nbatch = int(len(self.list12)/self.batch_size)+1
         print(self.ibatch,nbatch)
 
-        iend: int = (self.ibatch+1)*self.batch_size if self.ibatch<nbatch-1 else len(self.list12)
+        iend = (self.ibatch+1)*self.batch_size if self.ibatch<nbatch-1 else len(self.list12)
 
         list_path_class_batch = self.list12[self.ibatch*self.batch_size:iend]
         self.ibatch = self.ibatch+1
@@ -77,7 +77,7 @@ def train(net_d, net_c, is_cuda, nitr, is_d, is_c,
         nblock = (25,19)
         npix = 32
         list_path_class = training_data.get_batch()
-        np_in, np_trgc = detect.get_batch(list_path_class, npix, nblock)
+        np_in, np_trgc = dnn_util.get_batch(list_path_class, npix, nblock)
         input = Variable(torch.from_numpy(np_in), requires_grad=True)
         target_c = Variable(torch.from_numpy(np_trgc), requires_grad=False)
         if is_cuda:
@@ -112,9 +112,9 @@ def main():
     else:
         print("using CPU")
 
-    net_d, net_c = detect.load_network_classification(is_cuda, '.')
+    net_d, net_c = dnn_util.load_network_classification(is_cuda, '.')
 
-    training_data = TrainingData()
+    training_data = TrainingData(5)
 
     for i in range(20):
         train(net_d,net_c,is_cuda,1000,True,True,training_data)
