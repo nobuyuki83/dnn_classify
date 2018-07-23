@@ -21,6 +21,8 @@ def classify(img3):
     trchVImg = Variable(torch.from_numpy(npTnsrImg), requires_grad=False)
     trchVImg.contiguous()
     trchVImg2 = trchVImg.view(1, 3, trchVImg.shape[1], trchVImg.shape[2])
+    if is_cuda:
+        trchVImg2 = trchVImg2.cuda()
     descriptor = net_d(trchVImg2)
     average_descriptor = torch.nn.functional.max_pool2d(descriptor, kernel_size=descriptor.size()[2:])
     output_c = net_c(average_descriptor)
@@ -42,18 +44,18 @@ def capture_camera(net_d, net_c, mirror=True):
         if mirror is True:
             frame = frame[:,::-1]
 
-        frame2 = frame[0::2,0::2].copy()
+        frame2 = frame[::2,::2].copy()
         output_c = classify(frame2)
         soft_max = torch.nn.Softmax(dim=0)
         output_c1 = soft_max(output_c)
 
-        prob1 = output_c1.data[0]
-        prob2 = output_c1.data[1]
+        prob1 = output_c1.data[0] # karintou
+        prob2 = output_c1.data[1] # plain biscuit
 
-        cv2.line(frame2, (10,10),(10+int(prob1*100),10),(255,255,255), thickness=5)
-        cv2.line(frame2, (10,20),(10+int(prob2*100),20),(255,0,0), thickness=5)
-
-        cv2.imshow('camera capture', frame2)
+        frame3 = frame2.copy()
+        cv2.line(frame3, (10,10),(10+int(prob1*100),10),(255,255,255), thickness=5)
+        cv2.line(frame3, (10,20),(10+int(prob2*100),20),(255,  0,  0), thickness=5)
+        cv2.imshow('camera capture', frame3)
 
         dt = datetime.now()
         str_dt = dt.strftime('%Y%m%d_%H%M%S')
@@ -61,6 +63,10 @@ def capture_camera(net_d, net_c, mirror=True):
         key = cv2.waitKey(1) # wait 1 millisec
         if key == 27:
             break
+        if key == 49: # 1 karintou shiro
+            cv2.imwrite('img_train/1/'+str_dt+'.png',frame2)
+        if key == 50: # 2 plane buiscuit
+            cv2.imwrite('img_train/2/'+str_dt+'.png',frame2)
 
     cap.release() 
     cv2.destroyAllWindows()

@@ -19,10 +19,10 @@ def size_block(size, mag):
 class TrainingData:
     def __init__(self,batch_size):
         list1 = glob.glob('img_train/1/*.png')
-        list1 = list(map(lambda path: (path,1,2), list1))
+        list1 = list(map(lambda path: (path,1,1), list1))
 
         list2 = glob.glob('img_train/2/*.png')
-        list2 = list(map(lambda path: (path,2,2), list2))
+        list2 = list(map(lambda path: (path,2,1), list2))
 
         self.list12 = list1+list2
         print("class1: "+str(len(list1))+"  "+"class2: "+str(len(list2)))
@@ -35,7 +35,7 @@ class TrainingData:
         self.ibatch = 0
 
     def get_batch(self):
-        nbatch = int(len(self.list12)/self.batch_size)+1
+        nbatch = int(math.ceil(len(self.list12)/self.batch_size))
         iend = (self.ibatch+1)*self.batch_size if self.ibatch<nbatch-1 else len(self.list12)
 
         list_path_class_batch = self.list12[self.ibatch*self.batch_size:iend]
@@ -72,7 +72,8 @@ def train(net_d, net_c, is_cuda, nitr, is_d, is_c,
         net_c.eval()
 
     for itr in range(nitr):
-        nblock = (13,10)
+#        nblock = (13,10)
+        nblock = (10,8)
         npix = 32
         list_path_class = training_data.get_batch()
         np_in, np_trgc = dnn_util.get_batch(list_path_class, npix, nblock)
@@ -109,7 +110,7 @@ def main():
 
     net_d, net_c = dnn_util.load_network_classification(is_cuda, '.')
 
-    training_data = TrainingData(5)
+    training_data = TrainingData(10)
 
     for i in range(20):
         train(net_d,net_c,is_cuda,100,True,True,training_data)
