@@ -19,10 +19,10 @@ def size_block(size, mag):
 class TrainingData:
     def __init__(self,batch_size):
         list1 = glob.glob('img_train/1/*.png')
-        list1 = list(map(lambda path: (path,1), list1))
+        list1 = list(map(lambda path: (path,1,2), list1))
 
         list2 = glob.glob('img_train/2/*.png')
-        list2 = list(map(lambda path: (path,2), list2))
+        list2 = list(map(lambda path: (path,2,2), list2))
 
         self.list12 = list1+list2
         print("class1: "+str(len(list1))+"  "+"class2: "+str(len(list2)))
@@ -36,15 +36,13 @@ class TrainingData:
 
     def get_batch(self):
         nbatch = int(len(self.list12)/self.batch_size)+1
-        print(self.ibatch,nbatch)
-
         iend = (self.ibatch+1)*self.batch_size if self.ibatch<nbatch-1 else len(self.list12)
 
         list_path_class_batch = self.list12[self.ibatch*self.batch_size:iend]
         self.ibatch = self.ibatch+1
         if self.ibatch >= nbatch:
             self.ibatch = 0
-            self.iepoch = 0
+            self.iepoch = self.iepoch+1
             random.shuffle(self.list12)
 
         return list_path_class_batch
@@ -74,7 +72,7 @@ def train(net_d, net_c, is_cuda, nitr, is_d, is_c,
         net_c.eval()
 
     for itr in range(nitr):
-        nblock = (25,19)
+        nblock = (13,10)
         npix = 32
         list_path_class = training_data.get_batch()
         np_in, np_trgc = dnn_util.get_batch(list_path_class, npix, nblock)
@@ -86,11 +84,8 @@ def train(net_d, net_c, is_cuda, nitr, is_d, is_c,
         ###
         optimizer.zero_grad()
         descriptor = net_d(input)
-        print(descriptor.size())
         average_descriptor = torch.nn.functional.max_pool2d(descriptor, kernel_size=descriptor.size()[2:])
-        print(average_descriptor.size())
         output_c = net_c(average_descriptor)
-        print(output_c.size())
         output_c = output_c.view(-1,2)
         loss_c = difference_c(output_c, target_c)
         ###
@@ -117,7 +112,7 @@ def main():
     training_data = TrainingData(5)
 
     for i in range(20):
-        train(net_d,net_c,is_cuda,1000,True,True,training_data)
+        train(net_d,net_c,is_cuda,100,True,True,training_data)
 
 
 if __name__ == "__main__":

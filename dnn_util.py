@@ -9,11 +9,13 @@ import torchvision
 from torch.autograd import Variable
 
 
-def get_image_tnsr_from_img_path(path_img, npix):
+def get_image_tnsr_from_img_path(path_img, npix,mag):
     assert os.path.isfile(path_img)
     img1 = cv2.imread(path_img)
     ####
-    img3 = img1.copy()
+    img2 = img1[0::mag,0::mag]
+    ####
+    img3 = img2.copy()
     h3 = img3.shape[0]
     w3 = img3.shape[1]
     nbh3 = math.ceil(h3 / npix)
@@ -32,10 +34,11 @@ def get_batch(list_path_class, npix, nblock):
     np_batch_trg_c = []
     nelem = len(list_path_class)
     for i in range(nelem):
-        assert len(list_path_class[i]) == 2
+        assert len(list_path_class[i]) == 3
         pth0 = list_path_class[i][0]
         cls0 = list_path_class[i][1]-1
-        img, tnsr = get_image_tnsr_from_img_path(pth0, npix)
+        mag  = list_path_class[i][2]
+        img, tnsr = get_image_tnsr_from_img_path(pth0, npix, mag)
         ###
         np_batch_in.append(tnsr.flatten())
         np_batch_trg_c.append(cls0)
